@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>ClickForge — Pro Click Track System</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080810;
+  --surface: #0f0f1a;
+  --surface2: #16162a;
+  --surface3: #1e1e35;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.12);
+  --text: #eeeef8;
+  --muted: #6b6b8a;
+  --accent: #00d4ff;
+  --accent2: #ff6b35;
+  --accent3: #7fff6b;
+  --warning: #ffb347;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  padding: 1.5rem 1rem 4rem;
+  background-image:
+    radial-gradient(ellipse at 10% 10%, rgba(0,212,255,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 90%, rgba(255,107,53,0.05) 0%, transparent 50%);
+}
+
+.container { max-width: 820px; margin: 0 auto; }
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+.logo-wrap { display: flex; align-items: baseline; gap: 0.5rem; }
+.logo {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  letter-spacing: 2px;
+  color: var(--accent);
+  line-height: 1;
+}
+.logo-sub {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.live-badge {
+  background: rgba(255,107,53,0.15);
+  border: 1px solid rgba(255,107,53,0.3);
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--accent2);
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent2);
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+/* Upload Zone */
+.upload-zone {
+  border: 1.5px dashed var(--border2);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--accent);
+  background: rgba(0,212,255,0.04);
+}
+.upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+.upload-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+.upload-sub { font-size: 0.8rem; color: var(--muted); font-family: var(--font-mono); }
+#fileInput { display: none; }
+
+/* Song Info */
+.song-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  display: none;
+}
+.song-art {
+  width: 52px; height: 52px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; flex-shrink: 0;
+}
+.song-details { flex: 1; }
+.song-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.2rem; }
+.song-meta { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+
+/* BPM Display */
+.bpm-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.bpm-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem;
+  text-align: center;
+}
+.bpm-value {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  letter-spacing: 1px;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 0.2rem;
+}
+.bpm-label { font-family: var(--font-mono); font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+/* BPM Manual Control */
+.bpm-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.bpm-btn {
+  width: 36px; height: 36px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.bpm-btn:hover { border-color: var(--accent); color: var(--accent); }
+.bpm-slider { flex: 1; accent-color: var(--accent); }
+.bpm-display {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--accent);
+  min-width: 60px;
+  text-align: center;
+}
+
+/* Sections Timeline */
+.sections-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+.section-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+}
+.section-pill.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
+.section-pill.playing { border-color: var(--accent3); color: var(--accent3); background: rgba(127,255,107,0.08); animation: glow 0.8s infinite alternate; }
+@keyframes glow { from { box-shadow: 0 0 4px rgba(127,255,107,0.3); } to { box-shadow: 0 0 12px rgba(127,255,107,0.6); } }
+.section-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+.section-colors {
+  intro: '#00d4ff', verse: '#7fff6b', 'pre-chorus': '#ffb347',
+  chorus: '#ff6b35', bridge: '#c084fc', outro: '#6b8aff', instrumental: '#f472b6'
+}
+
+/* Voice Settings */
+.voice-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.voice-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+.voice-btn .v-icon { font-size: 1.4rem; display: block; margin-bottom: 0.25rem; }
+.voice-btn.active { border-color: var(--accent2); color: var(--text); background: rgba(255,107,53,0.1); }
+
+/* Main Transport */
+.transport {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.transport-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.time-display {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  letter-spacing: 2px;
+  color: var(--text);
+  line-height: 1;
+}
+.current-section-display {
+  text-align: right;
+}
+.current-section-name {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  letter-spacing: 1px;
+  color: var(--accent3);
+  line-height: 1;
+}
+.next-section-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+
+/* Progress bar */
+.progress-wrap {
+  position: relative;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+.progress-track {
+  width: 100%;
+  height: 6px;
+  background: var(--surface3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 999px;
+  width: 0%;
+  transition: width 0.1s linear;
+}
+.progress-markers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+}
+.progress-marker {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 6px;
+  border-radius: 1px;
+  opacity: 0.7;
+}
+
+/* Beat visualizer */
+.beat-viz {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+.beat-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--surface3);
+  transition: all 0.05s;
+}
+.beat-dot.beat-1 { width: 16px; height: 16px; }
+.beat-dot.active.beat-1 { background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+.beat-dot.active { background: var(--muted); }
+
+/* Transport buttons */
+.transport-btns {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: center;
+}
+.t-btn {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.65rem 1.25rem;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.05em;
+}
+.t-btn:hover { border-color: var(--border2); }
+.play-btn {
+  background: linear-gradient(135deg, var(--accent), #0099cc);
+  border: none;
+  border-radius: 12px;
+  padding: 0.85rem 2.5rem;
+  color: #000;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.play-btn:hover { opacity: 0.9; transform: scale(1.02); }
+.play-btn:active { transform: scale(0.98); }
+.play-btn.playing { background: linear-gradient(135deg, var(--accent2), #cc3300); }
+
+/* Volume controls */
+.vol-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.vol-group {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.vol-label { font-family: var(--font-mono); font-size: 0.65rem; color: var(--muted); white-space: nowrap; }
+input[type=range] { flex: 1; accent-color: var(--accent); }
+
+/* Playlist */
+.playlist-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.playlist-item:hover { border-color: var(--border2); }
+.playlist-item.active { border-color: var(--accent); background: rgba(0,212,255,0.05); }
+.pl-num { font-family: var(--font-display); font-size: 1rem; color: var(--muted); min-width: 20px; }
+.pl-info { flex: 1; }
+.pl-name { font-size: 0.85rem; font-weight: 500; margin-bottom: 0.1rem; }
+.pl-meta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+.pl-remove {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+.pl-remove:hover { color: var(--accent2); }
+
+.add-song-btn {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px dashed var(--border2);
+  border-radius: 10px;
+  padding: 0.75rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.add-song-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Analyse btn */
+.analyse-btn {
+  width: 100%;
+  background: rgba(0,212,255,0.1);
+  border: 1px solid rgba(0,212,255,0.3);
+  border-radius: 10px;
+  padding: 0.75rem;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.08em;
+  margin-top: 0.75rem;
+}
+.analyse-btn:hover { background: rgba(0,212,255,0.15); }
+.analyse-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid rgba(0,212,255,0.3);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 0.4rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.status-msg {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding: 0.5rem;
+  display: none;
+}
+.status-msg.visible { display: block; }
+
+@media (max-width: 500px) {
+  .bpm-row { grid-template-columns: 1fr 1fr; }
+  .voice-row { grid-template-columns: 1fr 1fr; }
+  .time-display { font-size: 1.8rem; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo-wrap">
+      <div class="logo">ClickForge</div>
+      <div class="logo-sub">Pro Click Track</div>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      STAGE READY
+    </div>
+  </header>
+
+  <!-- Upload -->
+  <div class="card">
+    <div class="section-label">Load Song</div>
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+      <div class="upload-icon">🎵</div>
+      <div class="upload-title">Drop MP3 Here</div>
+      <div class="upload-sub">or click to browse · MP3, WAV, M4A supported</div>
+    </div>
+    <input type="file" id="fileInput" accept="audio/*" onchange="loadFile(this)" />
+
+    <div class="song-info" id="songInfo">
+      <div class="song-art">🎵</div>
+      <div class="song-details">
+        <div class="song-name" id="songName">—</div>
+        <div class="song-meta" id="songMeta">—</div>
+      </div>
+    </div>
+
+    <button class="analyse-btn" id="analyseBtn" onclick="analyseSong()" disabled>
+      ⚡ Analyse Song — Detect BPM & Sections
+    </button>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+
+  <!-- BPM & Settings -->
+  <div class="card" id="settingsCard" style="display:none;">
+    <div class="section-label">Tempo & Time Signature</div>
+    <div class="bpm-row">
+      <div class="bpm-card">
+        <div class="bpm-value" id="bpmDisplay">120</div>
+        <div class="bpm-label">BPM</div>
+      </div>
+      <div class="bpm-card">
+        <div class="bpm-value" id="sigDisplay">4/4</div>
+        <div class="bpm-label">Time Sig</div>
+      </div>
+      <div class="bpm-card">
+        <div class="bpm-value" id="keyDisplay">—</div>
+        <div class="bpm-label">Key</div>
+      </div>
+    </div>
+
+    <div class="bpm-controls">
+      <button class="bpm-btn" onclick="adjustBPM(-5)">−5</button>
+      <button class="bpm-btn" onclick="adjustBPM(-1)">−</button>
+      <input type="range" id="bpmSlider" class="bpm-slider" min="40" max="240" value="120" oninput="setBPM(this.value)" />
+      <button class="bpm-btn" onclick="adjustBPM(1)">+</button>
+      <button class="bpm-btn" onclick="adjustBPM(5)">+5</button>
+    </div>
+
+    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+      <div class="section-label" style="margin:0;">Time Sig</div>
+      <select id="timeSig" onchange="setTimeSig(this.value)">
+        <option value="4">4/4</option>
+        <option value="3">3/4</option>
+        <option value="6">6/8</option>
+        <option value="2">2/4</option>
+        <option value="5">5/4</option>
+        <option value="7">7/8</option>
+      </select>
+      <div class="section-label" style="margin:0; margin-left:0.5rem;">Count In</div>
+      <select id="countIn">
+        <option value="1">1 bar</option>
+        <option value="2" selected>2 bars</option>
+        <option value="4">4 bars</option>
+      </select>
+    </div>
+
+    <!-- Tap Tempo -->
+    <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border);">
+      <div class="section-label">Tap Tempo — tap to the beat of the song</div>
+      <div style="display:flex; gap:0.75rem; align-items:center;">
+        <button id="tapBtn" onclick="tapTempo()"
+          style="background:rgba(255,107,53,0.15); border:1px solid rgba(255,107,53,0.4); border-radius:12px; padding:0.85rem 2rem; color:var(--accent2); font-family:var(--font-display); font-size:1.1rem; letter-spacing:2px; cursor:pointer; transition:all 0.1s; flex:1;">
+          👆 TAP BEAT
+        </button>
+        <button onclick="resetTap()"
+          style="background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:0.85rem 1rem; color:var(--muted); font-family:var(--font-mono); font-size:0.75rem; cursor:pointer;">
+          RESET
+        </button>
+        <button onclick="applyTap()"
+          style="background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.3); border-radius:10px; padding:0.85rem 1rem; color:var(--accent); font-family:var(--font-mono); font-size:0.75rem; cursor:pointer;">
+          APPLY ✓
+        </button>
+        <div style="text-align:center; min-width:70px;">
+          <div style="font-family:var(--font-display); font-size:1.4rem; color:var(--accent2);" id="tapDisplay">—</div>
+          <div style="font-family:var(--font-mono); font-size:0.62rem; color:var(--muted);">TAP BPM</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beat 1 Offset -->
+    <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border);">
+      <div class="section-label">Beat 1 Offset — nudge click to align with song downbeat</div>
+      <div style="display:flex; gap:0.75rem; align-items:center;">
+        <button class="bpm-btn" onclick="adjustOffset(-10)">−10ms</button>
+        <button class="bpm-btn" onclick="adjustOffset(-1)">−1ms</button>
+        <input type="range" id="offsetSlider" min="-500" max="500" value="0" oninput="setOffset(this.value)" style="flex:1; accent-color:var(--accent2);" />
+        <button class="bpm-btn" onclick="adjustOffset(1)">+1ms</button>
+        <button class="bpm-btn" onclick="adjustOffset(10)">+10ms</button>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.4rem;">
+        <span style="font-family:var(--font-mono); font-size:0.68rem; color:var(--muted);">Offset: <span id="offsetDisplay" style="color:var(--accent2);">0ms</span></span>
+        <button onclick="resetOffset()" style="background:none; border:none; color:var(--muted); font-family:var(--font-mono); font-size:0.68rem; cursor:pointer;">Reset offset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sections -->
+  <div class="card" id="sectionsCard" style="display:none;">
+    <div class="section-label">Song Sections</div>
+    <div class="sections-grid" id="sectionsGrid"></div>
+    <div style="font-family:var(--font-mono); font-size:0.7rem; color:var(--muted); margin-top:0.5rem;">
+      Click any section to jump to it during playback
+    </div>
+  </div>
+
+  <!-- Voice Director -->
+  <div class="card" id="voiceCard" style="display:none;">
+    <div class="section-label">Music Director Voice</div>
+    <div class="voice-row">
+      <button class="voice-btn active" id="voiceMale" onclick="setVoice('male')">
+        <span class="v-icon">👨</span>Male Director
+      </button>
+      <button class="voice-btn" id="voiceFemale" onclick="setVoice('female')">
+        <span class="v-icon">👩</span>Female Director
+      </button>
+    </div>
+    <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+      <label style="display:flex; align-items:center; gap:0.4rem; font-family:var(--font-mono); font-size:0.75rem; cursor:pointer;">
+        <input type="checkbox" id="voiceSection" checked /> Section callouts
+      </label>
+      <label style="display:flex; align-items:center; gap:0.4rem; font-family:var(--font-mono); font-size:0.75rem; cursor:pointer;">
+        <input type="checkbox" id="voiceCountdown" checked /> Countdown (4,3,2,1)
+      </label>
+      <label style="display:flex; align-items:center; gap:0.4rem; font-family:var(--font-mono); font-size:0.75rem; cursor:pointer;">
+        <input type="checkbox" id="voiceCountIn" checked /> Count in
+      </label>
+    </div>
+  </div>
+
+  <!-- Transport -->
+  <div class="transport" id="transportCard" style="display:none;">
+    <div class="transport-top">
+      <div class="time-display" id="timeDisplay">0:00</div>
+      <div class="current-section-display">
+        <div class="current-section-name" id="currentSectionName">—</div>
+        <div class="next-section-label" id="nextSectionLabel">waiting...</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap" onclick="seekTo(event)">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-markers" id="progressMarkers"></div>
+    </div>
+
+    <div class="beat-viz" id="beatViz"></div>
+
+    <div class="transport-btns">
+      <button class="t-btn" onclick="restart()">↺ RESTART</button>
+      <button class="play-btn" id="playBtn" onclick="togglePlay()">▶ PLAY</button>
+      <button class="t-btn" onclick="skipSection(1)">NEXT ▸▸</button>
+    </div>
+
+    <div class="vol-row">
+      <div class="vol-group">
+        <span class="vol-label">🎵 TRACK</span>
+        <input type="range" id="trackVol" min="0" max="100" value="70" oninput="setVol('track', this.value)" />
+        <span style="font-family:var(--font-mono); font-size:0.65rem; color:var(--muted);" id="trackVolLabel">70%</span>
+      </div>
+      <div class="vol-group">
+        <span class="vol-label">🥁 CLICK</span>
+        <input type="range" id="clickVol" min="0" max="100" value="100" oninput="setVol('click', this.value)" />
+        <span style="font-family:var(--font-mono); font-size:0.65rem; color:var(--muted);" id="clickVolLabel">100%</span>
+      </div>
+      <div class="vol-group">
+        <span class="vol-label">🎤 VOICE</span>
+        <input type="range" id="voiceVol" min="0" max="100" value="90" oninput="setVol('voice', this.value)" />
+        <span style="font-family:var(--font-mono); font-size:0.65rem; color:var(--muted);" id="voiceVolLabel">90%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Playlist -->
+  <div class="card">
+    <div class="section-label">Setlist / Playlist</div>
+    <div id="playlistItems"></div>
+    <button class="add-song-btn" onclick="document.getElementById('fileInput').click()">+ Add Song to Setlist</button>
+  </div>
+
+</div>
+
+<script>
+// Audio Context
+let audioCtx = null;
+let trackBuffer = null;
+let trackSource = null;
+let trackGain = null;
+let clickGain = null;
+let voiceGain = null;
+let startTime = 0;
+let pauseOffset = 0;
+let isPlaying = false;
+let animFrame = null;
+let clickInterval = null;
+let currentBeat = 0;
+let beatsPerBar = 4;
+let bpm = 120;
+let selectedVoice = 'male';
+let currentSectionIdx = 0;
+let countingIn = false;
+let countInBeats = 0;
+
+// Sections data
+let sections = [];
+let songDuration = 0;
+let playlist = [];
+let currentPlaylistIdx = -1;
+
+// Init AudioContext
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    trackGain = audioCtx.createGain();
+    clickGain = audioCtx.createGain();
+    voiceGain = audioCtx.createGain();
+    trackGain.connect(audioCtx.destination);
+    clickGain.connect(audioCtx.destination);
+    voiceGain.connect(audioCtx.destination);
+    trackGain.gain.value = 0.7;
+    clickGain.gain.value = 1.0;
+    voiceGain.gain.value = 0.9;
+  }
+}
+
+// Load File
+function loadFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  initAudio();
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const buffer = await audioCtx.decodeAudioData(e.target.result.slice(0));
+      trackBuffer = buffer;
+      songDuration = buffer.duration;
+
+      document.getElementById('songName').textContent = file.name.replace(/\.[^/.]+$/, '');
+      document.getElementById('songMeta').textContent = `${formatTime(songDuration)} · ${Math.round(buffer.sampleRate / 1000)}kHz · ${file.name.split('.').pop().toUpperCase()}`;
+      document.getElementById('songInfo').style.display = 'flex';
+      document.getElementById('analyseBtn').disabled = false;
+
+      // Add to playlist
+      const existing = playlist.findIndex(p => p.name === file.name);
+      if (existing === -1) {
+        playlist.push({ name: file.name.replace(/\.[^/.]+$/, ''), duration: songDuration, buffer: buffer, sections: [], bpm: 120 });
+        renderPlaylist();
+      }
+      currentPlaylistIdx = playlist.length - 1;
+      renderPlaylist();
+
+      document.getElementById('uploadZone').style.display = 'none';
+    } catch(err) {
+      alert('Could not load audio file. Please try an MP3 or WAV file.');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Analyse Song — BPM detection using peak detection algorithm
+async function analyseSong() {
+  if (!trackBuffer) return;
+
+  const btn = document.getElementById('analyseBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Analysing BPM & Song Structure...';
+  showStatus('Analysing audio... detecting tempo and sections...');
+
+  await new Promise(r => setTimeout(r, 100));
+
+  try {
+    // BPM Detection — offline processing
+    const offlineCtx = new OfflineAudioContext(1, trackBuffer.length, trackBuffer.sampleRate);
+    const source = offlineCtx.createBufferSource();
+    source.buffer = trackBuffer;
+
+    // High pass filter to isolate beats
+    const filter = offlineCtx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.value = 100;
+
+    source.connect(filter);
+    filter.connect(offlineCtx.destination);
+    source.start(0);
+
+    const rendered = await offlineCtx.startRendering();
+    const data = rendered.getChannelData(0);
+
+    // Peak detection for BPM
+    const result = detectBPM(data, trackBuffer.sampleRate);
+    bpm = result.bpm;
+    const beat1Offset = result.beat1Offset;
+
+    // Auto-apply beat 1 offset — converts to ms
+    const offsetMs = Math.round(beat1Offset * 1000);
+    setOffset(offsetMs);
+
+    // Auto-detect sections
+    const detectedSections = detectSections(data, trackBuffer.sampleRate, songDuration);
+    sections = detectedSections;
+
+    // Update playlist item
+    if (currentPlaylistIdx >= 0) {
+      playlist[currentPlaylistIdx].bpm = bpm;
+      playlist[currentPlaylistIdx].sections = sections;
+    }
+
+    // Update UI
+    setBPM(bpm);
+    renderSections();
+    renderProgressMarkers();
+    buildBeatViz();
+
+    document.getElementById('settingsCard').style.display = 'block';
+    document.getElementById('sectionsCard').style.display = 'block';
+    document.getElementById('voiceCard').style.display = 'block';
+    document.getElementById('transportCard').style.display = 'block';
+    document.getElementById('currentSectionName').textContent = sections[0]?.name || 'INTRO';
+
+    btn.innerHTML = '✅ Analysis Complete — Re-analyse';
+    btn.disabled = false;
+    showStatus('');
+
+  } catch(err) {
+    btn.innerHTML = '⚡ Analyse Song — Detect BPM & Sections';
+    btn.disabled = false;
+    showStatus('Analysis failed — using default settings');
+  }
+}
+
+// Proper BPM Detection using autocorrelation + beat position tracking
+function detectBPM(data, sampleRate) {
+  // Step 1 — Downsample to ~4kHz
+  const downsample = Math.round(sampleRate / 4000);
+  const downsampled = [];
+  for (let i = 0; i < data.length; i += downsample) {
+    downsampled.push(Math.abs(data[i]));
+  }
+  const dsRate = sampleRate / downsample;
+
+  // Step 2 — Compute onset strength (energy flux)
+  const frameSize = Math.round(dsRate * 0.025);
+  const hopSize = Math.round(dsRate * 0.010);
+  const onset = [];
+  let prevEnergy = 0;
+  for (let i = 0; i < downsampled.length - frameSize; i += hopSize) {
+    let energy = 0;
+    for (let j = 0; j < frameSize; j++) energy += downsampled[i + j] ** 2;
+    onset.push(Math.max(0, energy - prevEnergy));
+    prevEnergy = energy;
+  }
+
+  // Step 3 — Autocorrelation to find dominant period
+  const minBPM = 55, maxBPM = 210;
+  const minLag = Math.round((60 / maxBPM) * (dsRate / hopSize));
+  const maxLag = Math.round((60 / minBPM) * (dsRate / hopSize));
+
+  // Use only first 30 seconds for speed
+  const analysisFrames = Math.min(onset.length, Math.round(30 * dsRate / hopSize));
+  let bestLag = minLag, bestCorr = -Infinity;
+
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let corr = 0;
+    for (let i = 0; i < analysisFrames - lag; i++) corr += onset[i] * onset[i + lag];
+    // Also check harmonics (2x tempo)
+    let corr2 = 0;
+    const lag2 = lag * 2;
+    if (lag2 < analysisFrames) {
+      for (let i = 0; i < analysisFrames - lag2; i++) corr2 += onset[i] * onset[i + lag2];
+      corr += corr2 * 0.5;
+    }
+    if (corr > bestCorr) { bestCorr = corr; bestLag = lag; }
+  }
+
+  // Step 4 — Convert lag to BPM
+  const secondsPerBeat = (bestLag * hopSize) / dsRate;
+  let detectedBPM = 60 / secondsPerBeat;
+
+  // Normalize to musical range
+  while (detectedBPM < 60) detectedBPM *= 2;
+  while (detectedBPM > 200) detectedBPM /= 2;
+
+  // Round to nearest 0.5
+  detectedBPM = Math.round(detectedBPM * 2) / 2;
+
+  // Step 5 — Find beat 1 position (first strong onset)
+  const beatPositions = [];
+  const spb = secondsPerBeat;
+  const threshold = onset.slice(0, analysisFrames).reduce((a, b) => a + b) / analysisFrames * 2;
+
+  for (let i = 1; i < Math.min(onset.length, analysisFrames); i++) {
+    if (onset[i] > threshold && onset[i] > onset[i-1] && (beatPositions.length === 0 || (i - beatPositions[beatPositions.length-1]) > minLag * 0.8)) {
+      beatPositions.push(i);
+    }
+  }
+
+  // Calculate beat 1 offset from start of song
+  let beat1Offset = 0;
+  if (beatPositions.length > 0) {
+    beat1Offset = (beatPositions[0] * hopSize) / dsRate;
+    // Keep it within one beat period
+    beat1Offset = beat1Offset % spb;
+  }
+
+  return { bpm: Math.max(55, Math.min(210, detectedBPM)), beat1Offset };
+}
+
+// Tap Tempo
+let tapTimes = [];
+let tapTimeout = null;
+
+function tapTempo() {
+  const now = Date.now();
+  tapTimes.push(now);
+
+  // Flash the button
+  const btn = document.getElementById('tapBtn');
+  btn.style.background = 'rgba(255,107,53,0.4)';
+  setTimeout(() => btn.style.background = 'rgba(255,107,53,0.15)', 100);
+
+  // Clear taps after 2 seconds of inactivity
+  clearTimeout(tapTimeout);
+  tapTimeout = setTimeout(resetTap, 2500);
+
+  // Need at least 2 taps
+  if (tapTimes.length < 2) { document.getElementById('tapDisplay').textContent = '...'; return; }
+
+  // Calculate average interval from last 8 taps
+  const recent = tapTimes.slice(-8);
+  const intervals = [];
+  for (let i = 1; i < recent.length; i++) intervals.push(recent[i] - recent[i-1]);
+  const avg = intervals.reduce((a, b) => a + b) / intervals.length;
+  const tappedBPM = Math.round(60000 / avg);
+
+  document.getElementById('tapDisplay').textContent = tappedBPM;
+
+  if (tappedBPM >= 40 && tappedBPM <= 240) {
+    setBPM(tappedBPM);
+  }
+}
+
+function resetTap() {
+  tapTimes = [];
+  document.getElementById('tapDisplay').textContent = '—';
+}
+
+// Beat 1 Offset
+let beatOffset = 0; // milliseconds
+
+function setOffset(val) {
+  beatOffset = parseInt(val);
+  document.getElementById('offsetDisplay').textContent = (beatOffset >= 0 ? '+' : '') + beatOffset + 'ms';
+  document.getElementById('offsetSlider').value = beatOffset;
+  if (isPlaying) { stopClick(); startClick(); }
+}
+
+function adjustOffset(delta) {
+  setOffset(beatOffset + delta);
+}
+
+function resetOffset() {
+  setOffset(0);
+}
+
+// Section Detection based on energy analysis
+function detectSections(data, sampleRate, duration) {
+  const chunkSize = sampleRate * 4; // 4 second chunks
+  const chunks = Math.floor(data.length / chunkSize);
+  const energyMap = [];
+
+  for (let i = 0; i < chunks; i++) {
+    let energy = 0;
+    for (let j = 0; j < chunkSize; j++) {
+      energy += Math.abs(data[i * chunkSize + j]);
+    }
+    energyMap.push(energy / chunkSize);
+  }
+
+  const avgEnergy = energyMap.reduce((a, b) => a + b) / energyMap.length;
+  const maxEnergy = Math.max(...energyMap);
+  const minEnergy = Math.min(...energyMap);
+
+  const sectionNames = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Verse 2', 'Pre-Chorus 2', 'Chorus 2', 'Bridge', 'Chorus 3', 'Outro'];
+  const sectionColors = ['#00d4ff', '#7fff6b', '#ffb347', '#ff6b35', '#7fff6b', '#ffb347', '#ff6b35', '#c084fc', '#ff6b35', '#6b8aff'];
+  const detected = [];
+
+  // Simple heuristic: divide into sections based on energy changes
+  const totalBars = Math.round((duration * bpm) / (beatsPerBar * 60));
+  const segmentCount = Math.min(sectionNames.length, Math.max(4, Math.floor(totalBars / 8)));
+
+  const segmentBars = Math.floor(totalBars / segmentCount);
+
+  for (let i = 0; i < segmentCount; i++) {
+    const barStart = i * segmentBars;
+    const timeStart = (barStart * beatsPerBar * 60) / bpm;
+    if (timeStart >= duration) break;
+
+    detected.push({
+      name: sectionNames[i] || `Section ${i+1}`,
+      bar: barStart,
+      time: timeStart,
+      color: sectionColors[i] || '#00d4ff'
+    });
+  }
+
+  return detected;
+}
+
+// Render sections
+function renderSections() {
+  const grid = document.getElementById('sectionsGrid');
+  grid.innerHTML = sections.map((s, i) => `
+    <div class="section-pill ${i === 0 ? 'active' : ''}" id="pill-${i}" onclick="jumpToSection(${i})" style="border-color: ${s.color}20; color: ${s.color};">
+      <div class="section-dot" style="background: ${s.color};"></div>
+      ${s.name} <span style="opacity:0.5; font-size:0.62rem;">bar ${s.bar + 1}</span>
+    </div>
+  `).join('');
+}
+
+// Render progress markers
+function renderProgressMarkers() {
+  const container = document.getElementById('progressMarkers');
+  container.innerHTML = sections.map(s => {
+    const pct = (s.time / songDuration) * 100;
+    return `<div class="progress-marker" style="left: ${pct}%; background: ${s.color};"></div>`;
+  }).join('');
+}
+
+// Build beat visualizer dots
+function buildBeatViz() {
+  const viz = document.getElementById('beatViz');
+  viz.innerHTML = Array.from({length: beatsPerBar}, (_, i) =>
+    `<div class="beat-dot ${i === 0 ? 'beat-1' : ''}" id="beat-${i}"></div>`
+  ).join('');
+}
+
+function setBPM(val) {
+  bpm = Math.max(40, Math.min(240, parseInt(val)));
+  document.getElementById('bpmDisplay').textContent = bpm;
+  document.getElementById('bpmSlider').value = bpm;
+  if (sections.length > 0) buildVoiceCues();
+}
+function adjustBPM(delta) { setBPM(bpm + delta); }
+function setTimeSig(val) {
+  beatsPerBar = parseInt(val);
+  document.getElementById('sigDisplay').textContent = val + '/4';
+  buildBeatViz();
+  if (sections.length > 0) buildVoiceCues();
+}
+
+// Voice
+function setVoice(type) {
+  selectedVoice = type;
+  document.getElementById('voiceMale').classList.toggle('active', type === 'male');
+  document.getElementById('voiceFemale').classList.toggle('active', type === 'female');
+}
+
+// Speak using Web Speech API with voice selection
+function speak(text, priority = false) {
+  if (!document.getElementById('voiceSection').checked && !priority) return;
+  if (!('speechSynthesis' in window)) return;
+
+  const vol = parseFloat(document.getElementById('voiceVol').value) / 100;
+  if (vol === 0) return;
+
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.volume = vol;
+  utter.rate = 1.1;
+  utter.pitch = selectedVoice === 'female' ? 1.4 : 0.8;
+
+  // Try to find appropriate voice
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length > 0) {
+    const preferred = voices.filter(v =>
+      selectedVoice === 'female'
+        ? v.name.toLowerCase().includes('female') || v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Karen')
+        : v.name.toLowerCase().includes('male') || v.name.includes('Daniel') || v.name.includes('Alex') || v.name.includes('David')
+    );
+    if (preferred.length > 0) utter.voice = preferred[0];
+  }
+
+  window.speechSynthesis.speak(utter);
+}
+
+// Play click sound using Web Audio API
+function playClick(isDownbeat) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const env = audioCtx.createGain();
+
+  osc.connect(env);
+  env.connect(clickGain);
+
+  osc.frequency.value = isDownbeat ? 1200 : 800;
+  env.gain.setValueAtTime(1, audioCtx.currentTime);
+  env.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+
+  osc.start(audioCtx.currentTime);
+  osc.stop(audioCtx.currentTime + 0.05);
+
+  // Flash beat dot
+  const dot = document.getElementById(`beat-${currentBeat}`);
+  if (dot) {
+    dot.classList.add('active');
+    setTimeout(() => dot.classList.remove('active'), 80);
+  }
+}
+
+// Dynamic count-in based on time signature
+function getCountIn(beats) {
+  // Dynamic counting based on time sig
+  if (beats === 3) return ['1', '2', '3'];
+  if (beats === 2) return ['1', '2'];
+  if (beats === 5) return ['1', '2', '3', '4', '5'];
+  if (beats === 6) return ['1', '2', '3', '4', '5', '6']; // 6/8
+  if (beats === 7) return ['1', '2', '3', '4', '5', '6', '7'];
+  if (beats === 12) return ['1', 'and', '2', 'and', '3', 'and', '4', 'and']; // 12/8
+  return ['5', '6', '7', '8']; // default 4/4 musician style
+}
+
+// Section announcement phrases — sounds like a real music director!
+function getSectionAnnouncement(section, isFirst, isLast) {
+  const name = section.name.toLowerCase();
+  if (isFirst) return `Alright, starting with the ${section.name}`;
+  if (isLast) return `Last section, ${section.name}, here we go`;
+  if (name.includes('chorus')) return `Big ${section.name} everybody`;
+  if (name.includes('bridge')) return `${section.name}, stay tight`;
+  if (name.includes('verse')) return `Back to ${section.name}`;
+  if (name.includes('pre')) return `${section.name}, get ready`;
+  if (name.includes('intro')) return `${section.name} coming up`;
+  if (name.includes('outro') || name.includes('end')) return `Final section, ${section.name}`;
+  return `${section.name} coming up`;
+}
+
+// Speak using Web Speech API
+let lastSpoken = '';
+let lastSpokenTime = 0;
+
+function speak(text, priority = false) {
+  if (!('speechSynthesis' in window)) return;
+  const vol = parseFloat(document.getElementById('voiceVol').value) / 100;
+  if (vol === 0) return;
+
+  // Debounce — don't repeat same phrase within 2 seconds
+  const now = Date.now();
+  if (text === lastSpoken && now - lastSpokenTime < 2000 && !priority) return;
+  lastSpoken = text;
+  lastSpokenTime = now;
+
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.volume = vol;
+  utter.rate = priority ? 1.0 : 1.15;
+  utter.pitch = selectedVoice === 'female' ? 1.3 : 0.85;
+
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length > 0) {
+    const preferred = voices.filter(v =>
+      selectedVoice === 'female'
+        ? v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Karen') || v.name.toLowerCase().includes('female')
+        : v.name.includes('Daniel') || v.name.includes('Alex') || v.name.includes('David') || v.name.toLowerCase().includes('male')
+    );
+    if (preferred.length > 0) utter.voice = preferred[0];
+  }
+  window.speechSynthesis.speak(utter);
+}
+
+// Scheduled voice cues — pre-planned for each section transition
+let scheduledCues = [];
+let lastCueIdx = -1;
+
+function buildVoiceCues() {
+  scheduledCues = [];
+  const secondsPerBeat = 60 / bpm;
+  const secondsPerBar = secondsPerBeat * beatsPerBar;
+
+  // Speech synthesis typically takes ~350ms to start
+  // Fire cues early to compensate
+  const speechDelay = 0.35;
+
+  sections.forEach((section, i) => {
+    const isFirst = i === 0;
+    const isLast = i === sections.length - 1;
+
+    // ALL times based purely on section.time from the SONG
+    // Zero dependency on beat grid or click track
+
+    // Cue 1 — Announce section name 2 bars before
+    const announceTime = isFirst
+      ? Math.max(0, section.time - speechDelay)
+      : Math.max(0, section.time - secondsPerBar * 2 - speechDelay);
+
+    scheduledCues.push({
+      time: announceTime,
+      type: 'announce',
+      text: getSectionAnnouncement(section, isFirst, isLast),
+      fired: false
+    });
+
+    // Cue 2 — Count in 1 bar before — each beat fired individually on song time
+    const countStartTime = section.time - secondsPerBar;
+    if (countStartTime >= 0) {
+      const counts = getCountIn(beatsPerBar);
+      counts.forEach((count, beatIdx) => {
+        const cueTime = countStartTime + (beatIdx * secondsPerBeat) - speechDelay;
+        if (cueTime >= 0) {
+          scheduledCues.push({
+            time: cueTime,
+            type: 'count',
+            text: count,
+            fired: false
+          });
+        }
+      });
+    }
+  });
+
+  // Sort strictly by song time
+  scheduledCues.sort((a, b) => a.time - b.time);
+}
+
+// Fire a voice cue
+function fireCue(cue) {
+  if (cue.fired) return;
+  cue.fired = true;
+
+  if (cue.type === 'announce') {
+    if (document.getElementById('voiceSection').checked) {
+      speak(cue.text, true);
+    }
+  } else if (cue.type === 'count') {
+    if (document.getElementById('voiceCountdown').checked) {
+      speak(cue.text, true);
+    }
+  } else if (cue.type === 'section') {
+    // Just update display — announcement already handled
+  }
+}
+function togglePlay() {
+  if (!trackBuffer) { alert('Please load a song first!'); return; }
+  initAudio();
+  audioCtx.resume();
+
+  if (isPlaying) {
+    pauseTrack();
+  } else {
+    playTrack();
+  }
+}
+
+function playTrack() {
+  isPlaying = true;
+  document.getElementById('playBtn').textContent = '⏸ PAUSE';
+  document.getElementById('playBtn').classList.add('playing');
+
+  // Start audio
+  if (trackSource) trackSource.disconnect();
+  trackSource = audioCtx.createBufferSource();
+  trackSource.buffer = trackBuffer;
+  trackSource.connect(trackGain);
+  trackSource.start(0, pauseOffset);
+  startTime = audioCtx.currentTime - pauseOffset;
+
+  trackSource.onended = () => {
+    if (isPlaying) stopTrack();
+  };
+
+  // Start click
+  startClick();
+
+  // Build and reset all voice cues from current position
+  buildVoiceCues();
+  // Mark cues before current position as already fired
+  scheduledCues.forEach(cue => {
+    if (cue.time < pauseOffset) cue.fired = true;
+  });
+
+  // Start animation loop
+  updateLoop();
+}
+
+function pauseTrack() {
+  isPlaying = false;
+  pauseOffset = audioCtx.currentTime - startTime;
+  if (trackSource) { trackSource.stop(); trackSource = null; }
+  stopClick();
+  cancelAnimationFrame(animFrame);
+  document.getElementById('playBtn').textContent = '▶ PLAY';
+  document.getElementById('playBtn').classList.remove('playing');
+}
+
+function stopTrack() {
+  isPlaying = false;
+  pauseOffset = 0;
+  if (trackSource) { try { trackSource.stop(); } catch(e){} trackSource = null; }
+  stopClick();
+  cancelAnimationFrame(animFrame);
+  document.getElementById('playBtn').textContent = '▶ PLAY';
+  document.getElementById('playBtn').classList.remove('playing');
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('timeDisplay').textContent = '0:00';
+}
+
+function restart() {
+  stopTrack();
+  pauseOffset = 0;
+  currentBeat = 0;
+  currentSectionIdx = 0;
+  updateSectionDisplay(0);
+}
+
+// Click track engine
+let nextClickTime = 0;
+let clickScheduler = null;
+
+function startClick() {
+  const secondsPerBeat = 60 / bpm;
+  const offsetSeconds = beatOffset / 1000;
+  const songPosition = pauseOffset + offsetSeconds;
+  const totalBeats = Math.max(0, songPosition) / secondsPerBeat;
+  const beatFraction = totalBeats % 1;
+  const timeToNextBeat = beatFraction > 0.01 ? (1 - beatFraction) * secondsPerBeat : 0;
+  nextClickTime = audioCtx.currentTime + timeToNextBeat;
+  currentBeat = Math.floor(totalBeats) % beatsPerBar;
+  scheduleClick();
+}
+
+function stopClick() {
+  if (clickScheduler) clearTimeout(clickScheduler);
+}
+
+function scheduleClick() {
+  const secondsPerBeat = 60 / bpm;
+  const scheduleAhead = 0.1;
+
+  while (nextClickTime < audioCtx.currentTime + scheduleAhead) {
+    const isDownbeat = currentBeat % beatsPerBar === 0;
+    scheduleClickSound(nextClickTime, isDownbeat, currentBeat % beatsPerBar);
+    nextClickTime += secondsPerBeat;
+    currentBeat++;
+  }
+
+  if (isPlaying) {
+    clickScheduler = setTimeout(scheduleClick, 25);
+  }
+}
+
+function scheduleClickSound(time, isDownbeat, beatInBar) {
+  const osc = audioCtx.createOscillator();
+  const env = audioCtx.createGain();
+  osc.connect(env);
+  env.connect(clickGain);
+  osc.frequency.value = isDownbeat ? 1200 : 800;
+  env.gain.setValueAtTime(0.8, time);
+  env.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+  osc.start(time);
+  osc.stop(time + 0.06);
+}
+
+// Animation loop with smart cue firing
+function updateLoop() {
+  if (!isPlaying) return;
+
+  const elapsed = audioCtx.currentTime - startTime;
+
+  // Update progress
+  const pct = Math.min((elapsed / songDuration) * 100, 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('timeDisplay').textContent = formatTime(elapsed);
+
+  // Visual beat indicator
+  const secondsPerBeat = 60 / bpm;
+  const beatNum = Math.floor(elapsed / secondsPerBeat) % beatsPerBar;
+  document.querySelectorAll('.beat-dot').forEach((d, i) => {
+    d.classList.toggle('active', i === beatNum);
+  });
+
+  // Check current section and update display
+  let newSectionIdx = 0;
+  for (let i = sections.length - 1; i >= 0; i--) {
+    if (elapsed >= sections[i].time) { newSectionIdx = i; break; }
+  }
+  if (newSectionIdx !== currentSectionIdx) {
+    currentSectionIdx = newSectionIdx;
+    updateSectionDisplay(currentSectionIdx);
+  }
+
+  // Fire scheduled voice cues
+  scheduledCues.forEach(cue => {
+    if (!cue.fired && elapsed >= cue.time) {
+      fireCue(cue);
+    }
+  });
+
+  animFrame = requestAnimationFrame(updateLoop);
+}
+
+function updateSectionDisplay(idx) {
+  const section = sections[idx];
+  if (!section) return;
+
+  document.getElementById('currentSectionName').textContent = section.name.toUpperCase();
+  document.getElementById('currentSectionName').style.color = section.color;
+
+  const next = sections[idx + 1];
+  document.getElementById('nextSectionLabel').textContent = next ? `Next: ${next.name}` : 'Final section';
+
+  // Update pills
+  document.querySelectorAll('.section-pill').forEach((p, i) => {
+    p.classList.toggle('playing', i === idx);
+    p.classList.toggle('active', i === idx);
+  });
+}
+
+function jumpToSection(idx) {
+  const section = sections[idx];
+  if (!section) return;
+
+  const wasPlaying = isPlaying;
+  if (isPlaying) pauseTrack();
+  pauseOffset = section.time;
+  currentSectionIdx = idx;
+  updateSectionDisplay(idx);
+  document.getElementById('timeDisplay').textContent = formatTime(section.time);
+  document.getElementById('progressFill').style.width = ((section.time / songDuration) * 100) + '%';
+  if (wasPlaying) playTrack();
+}
+
+function skipSection(dir) {
+  const newIdx = Math.max(0, Math.min(sections.length - 1, currentSectionIdx + dir));
+  jumpToSection(newIdx);
+}
+
+function seekTo(e) {
+  if (!songDuration) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  const newTime = pct * songDuration;
+  const wasPlaying = isPlaying;
+  if (isPlaying) pauseTrack();
+  pauseOffset = newTime;
+  document.getElementById('progressFill').style.width = (pct * 100) + '%';
+  document.getElementById('timeDisplay').textContent = formatTime(newTime);
+  if (wasPlaying) playTrack();
+}
+
+// Volume
+function setVol(type, val) {
+  const v = val / 100;
+  if (type === 'track' && trackGain) { trackGain.gain.value = v; document.getElementById('trackVolLabel').textContent = val + '%'; }
+  if (type === 'click' && clickGain) { clickGain.gain.value = v; document.getElementById('clickVolLabel').textContent = val + '%'; }
+  if (type === 'voice') { document.getElementById('voiceVolLabel').textContent = val + '%'; }
+}
+
+function applyTap() {
+  const tapBPM = parseInt(document.getElementById('tapDisplay').textContent);
+  if (!isNaN(tapBPM) && tapBPM >= 40 && tapBPM <= 240) {
+    setBPM(tapBPM);
+    if (isPlaying) { stopClick(); startClick(); }
+  }
+}
+
+function adjustOffset(delta) {
+  const current = parseInt(document.getElementById('offsetSlider').value) || 0;
+  setOffset(Math.max(-500, Math.min(500, current + delta)));
+}
+
+function resetOffset() { setOffset(0); }
+
+// Playlist
+function renderPlaylist() {
+  const container = document.getElementById('playlistItems');
+  if (playlist.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = playlist.map((song, i) => `
+    <div class="playlist-item ${i === currentPlaylistIdx ? 'active' : ''}" onclick="loadFromPlaylist(${i})">
+      <div class="pl-num">${i + 1}</div>
+      <div class="pl-info">
+        <div class="pl-name">${song.name}</div>
+        <div class="pl-meta">${formatTime(song.duration)} · ${song.bpm} BPM · ${song.sections.length} sections</div>
+      </div>
+      <button class="pl-remove" onclick="removeFromPlaylist(event, ${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function loadFromPlaylist(idx) {
+  const song = playlist[idx];
+  if (!song) return;
+  currentPlaylistIdx = idx;
+  trackBuffer = song.buffer;
+  songDuration = song.duration;
+  bpm = song.bpm;
+  sections = song.sections;
+
+  stopTrack();
+  pauseOffset = 0;
+
+  document.getElementById('songName').textContent = song.name;
+  document.getElementById('songMeta').textContent = `${formatTime(song.duration)} · ${song.bpm} BPM`;
+  document.getElementById('songInfo').style.display = 'flex';
+
+  if (sections.length > 0) {
+    setBPM(bpm);
+    renderSections();
+    renderProgressMarkers();
+    buildBeatViz();
+    document.getElementById('settingsCard').style.display = 'block';
+    document.getElementById('sectionsCard').style.display = 'block';
+    document.getElementById('voiceCard').style.display = 'block';
+    document.getElementById('transportCard').style.display = 'block';
+    updateSectionDisplay(0);
+  }
+
+  renderPlaylist();
+}
+
+function removeFromPlaylist(e, idx) {
+  e.stopPropagation();
+  playlist.splice(idx, 1);
+  if (currentPlaylistIdx === idx) { stopTrack(); currentPlaylistIdx = -1; }
+  else if (currentPlaylistIdx > idx) currentPlaylistIdx--;
+  renderPlaylist();
+}
+
+// Drag and drop
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('audio/')) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('fileInput').files = dt.files;
+    loadFile(document.getElementById('fileInput'));
+  }
+});
+
+// Load voices for speech synthesis
+window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+
+// Helpers
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+function showStatus(msg) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.classList.toggle('visible', !!msg);
+}
+</script>
+</body>
+</html>
