@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BeatForge — AI Music Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0eff8;
+    --muted: #7c7a96;
+    --accent: #7f77dd;
+    --accent2: #5dcaa5;
+    --accent3: #ef9f27;
+    --danger: #e24b4a;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+    background-image: radial-gradient(ellipse at 20% 20%, rgba(127,119,221,0.08) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 80%, rgba(93,202,165,0.05) 0%, transparent 60%);
+  }
+
+  .container { max-width: 760px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 3rem; }
+  .logo {
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.4rem;
+  }
+  .tagline { color: var(--muted); font-size: 0.9rem; font-family: var(--font-mono); letter-spacing: 0.08em; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .genre-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+  }
+
+  .genre-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 0.5rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  .genre-btn .icon { display: block; font-size: 1.4rem; margin-bottom: 0.3rem; }
+  .genre-btn:hover { border-color: var(--border2); background: #222230; }
+  .genre-btn.active {
+    border-color: var(--accent);
+    background: rgba(127,119,221,0.12);
+    color: #c8c4f8;
+  }
+
+  .mood-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .mood-tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+  .mood-tag:hover { border-color: var(--border2); color: var(--text); }
+  .mood-tag.active { background: rgba(93,202,165,0.12); border-color: var(--accent2); color: var(--accent2); }
+
+  textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.6;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  textarea:focus { border-color: var(--border2); }
+  textarea::placeholder { color: var(--muted); }
+
+  .settings-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+  .setting-group label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.55rem 0.85rem;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237c7a96' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+  }
+  select:focus { border-color: var(--border2); }
+
+  .api-key-row { display: flex; gap: 0.6rem; align-items: center; }
+  input[type="text"], input[type="password"] {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.9rem;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus { border-color: var(--border2); }
+  input::placeholder { color: var(--muted); }
+
+  .toggle-vis {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .toggle-vis:hover { border-color: var(--border2); color: var(--text); }
+
+  .generate-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--accent), #534ab7);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .generate-btn:hover { opacity: 0.9; }
+  .generate-btn:active { transform: scale(0.99); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.75rem;
+    margin-top: 1.25rem;
+    display: none;
+  }
+  .result-card.visible { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .track-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+  .track-art {
+    width: 56px; height: 56px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; flex-shrink: 0;
+  }
+  .track-info .track-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.15rem; }
+  .track-info .track-meta { font-size: 0.78rem; color: var(--muted); font-family: var(--font-mono); }
+
+  audio {
+    width: 100%;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    accent-color: var(--accent);
+  }
+
+  .track-actions { display: flex; gap: 0.6rem; }
+  .action-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+    display: inline-block;
+  }
+  .action-btn:hover { border-color: var(--border2); }
+
+  .status-bar {
+    text-align: center;
+    padding: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: none;
+  }
+  .status-bar.visible { display: block; }
+
+  .error-msg {
+    background: rgba(226,75,74,0.08);
+    border: 1px solid rgba(226,75,74,0.25);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    color: #f09595;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    margin-top: 1rem;
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+
+  .tip {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 0.6rem;
+  }
+  .tip a { color: var(--accent2); text-decoration: none; }
+  .tip a:hover { text-decoration: underline; }
+
+  .history { margin-top: 2rem; }
+  .history-title {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .history-item:hover { border-color: var(--border2); }
+  .history-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .history-info { flex: 1; }
+  .history-info .h-title { font-size: 0.85rem; font-weight: 700; }
+  .history-info .h-meta { font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); }
+  .history-play { color: var(--muted); font-size: 0.8rem; font-family: var(--font-mono); }
+
+  .preset-tab {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.45rem 1rem;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .preset-tab.active { background: rgba(127,119,221,0.15); border-color: var(--accent); color: var(--text); }
+  .preset-tab:hover:not(.active) { border-color: var(--border2); color: var(--text); }
+
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+  }
+
+  .preset-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .preset-card:hover { border-color: var(--border2); background: #222230; }
+  .preset-card.active { border-color: var(--accent2); background: rgba(93,202,165,0.08); }
+  .preset-icon { font-size: 1.5rem; margin-bottom: 0.3rem; }
+  .preset-name { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.1rem; }
+  .preset-sub { font-size: 0.68rem; color: var(--muted); font-family: var(--font-mono); }
+
+  @media (max-width: 500px) {
+    .genre-grid { grid-template-columns: repeat(2, 1fr); }
+    .settings-row { grid-template-columns: 1fr; }
+    .preset-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">BeatForge</div>
+    <div class="tagline">// ai music generator — your personal studio</div>
+  </header>
+
+  <!-- API Key -->
+  <div class="card">
+    <div class="section-label">API Key (aimlapi.com)</div>
+    <div class="api-key-row">
+      <input type="password" id="apiKey" placeholder="Paste your aimlapi.com key here..." />
+      <button class="toggle-vis" onclick="toggleKey()">Show</button>
+    </div>
+    <div class="tip" style="text-align:left; margin-top:0.5rem;">
+      Get a free key at <a href="https://aimlapi.com" target="_blank">aimlapi.com</a> — no credit card needed
+    </div>
+  </div>
+
+  <!-- Genre -->
+  <div class="card">
+    <div class="section-label">Genre</div>
+    <div class="genre-grid">
+      <button class="genre-btn" data-genre="hip hop" onclick="selectGenre(this)">
+        <span class="icon">🎤</span>Hip Hop
+      </button>
+      <button class="genre-btn" data-genre="jazz" onclick="selectGenre(this)">
+        <span class="icon">🎷</span>Jazz
+      </button>
+      <button class="genre-btn" data-genre="edm electronic dance music" onclick="selectGenre(this)">
+        <span class="icon">🎛️</span>EDM
+      </button>
+      <button class="genre-btn" data-genre="rock" onclick="selectGenre(this)">
+        <span class="icon">🎸</span>Rock
+      </button>
+      <button class="genre-btn" data-genre="pop" onclick="selectGenre(this)">
+        <span class="icon">✨</span>Pop
+      </button>
+      <button class="genre-btn" data-genre="lo-fi chill beats" onclick="selectGenre(this)">
+        <span class="icon">🌙</span>Lo-fi
+      </button>
+    </div>
+  </div>
+
+  <!-- Artist Presets -->
+  <div class="card">
+    <div class="section-label">Artist Style Presets</div>
+    <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem; flex-wrap:wrap;">
+      <button class="preset-tab active" onclick="switchTab(this,'edm-tab')">🎛️ EDM / DJ</button>
+      <button class="preset-tab" onclick="switchTab(this,'worship-tab')">✝️ Christian Worship</button>
+      <button class="preset-tab" onclick="switchTab(this,'drumless-tab')">🥁 Drumless</button>
+    </div>
+
+    <div id="edm-tab" class="preset-tab-content">
+      <div class="preset-grid">
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="edm electronic dance music"
+          data-prompt="dubstep, heavy bass drops, aggressive synths, wobble bass, dark energy, glitchy"
+          data-moods="energetic,aggressive,dark">
+          <div class="preset-icon">⚡</div>
+          <div class="preset-name">Skrillex</div>
+          <div class="preset-sub">Dubstep / Brostep</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="edm electronic dance music"
+          data-prompt="progressive house, melodic synths, euphoric build, festival anthem, emotional drop, uplifting"
+          data-moods="energetic,uplifting">
+          <div class="preset-icon">🏟️</div>
+          <div class="preset-name">Hardwell</div>
+          <div class="preset-sub">Progressive House</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="edm electronic dance music"
+          data-prompt="big room house, festival drop, pumping kick, euphoric synths, energetic, anthemic"
+          data-moods="energetic,uplifting">
+          <div class="preset-icon">🎆</div>
+          <div class="preset-name">Martin Garrix</div>
+          <div class="preset-sub">Big Room House</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="edm electronic dance music"
+          data-prompt="future bass, colorful synths, emotional drop, vocal chops, lush pads, dreamy"
+          data-moods="dreamy,energetic,uplifting">
+          <div class="preset-icon">🌈</div>
+          <div class="preset-name">Flume</div>
+          <div class="preset-sub">Future Bass</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="edm electronic dance music"
+          data-prompt="melodic techno, hypnotic arpeggios, deep bassline, atmospheric pads, dark, driving"
+          data-moods="dark,energetic">
+          <div class="preset-icon">🖤</div>
+          <div class="preset-name">Fisher</div>
+          <div class="preset-sub">Melodic Techno</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="edm electronic dance music"
+          data-prompt="electro house, funky bassline, punchy kicks, synth stabs, club, energetic"
+          data-moods="energetic,uplifting">
+          <div class="preset-icon">🕺</div>
+          <div class="preset-name">David Guetta</div>
+          <div class="preset-sub">Electro House</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="worship-tab" class="preset-tab-content" style="display:none;">
+      <div class="preset-grid">
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="contemporary Christian worship"
+          data-prompt="high energy worship, electric guitar, massive choir, powerful drums, explosive, celebration"
+          data-moods="energetic,uplifting">
+          <div class="preset-icon">🔥</div>
+          <div class="preset-name">Planetshakers</div>
+          <div class="preset-sub">High-Energy Praise</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="contemporary Christian worship"
+          data-prompt="anthemic worship, piano, electric guitar, choir, emotional, cinematic"
+          data-moods="uplifting,melancholic,dreamy">
+          <div class="preset-icon">🕊️</div>
+          <div class="preset-name">Hillsong</div>
+          <div class="preset-sub">Anthemic Worship</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="urban gospel worship"
+          data-prompt="urban gospel, jazz, soulful choir, organ, Latin rhythms, celebratory"
+          data-moods="uplifting,energetic">
+          <div class="preset-icon">🎺</div>
+          <div class="preset-name">Israel Houghton</div>
+          <div class="preset-sub">Urban Gospel / Jazz</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="contemporary Christian worship"
+          data-prompt="intimate worship, acoustic guitar, soft piano, gentle, tender, peaceful"
+          data-moods="dreamy,melancholic,uplifting">
+          <div class="preset-icon">🌿</div>
+          <div class="preset-name">Bethel Music</div>
+          <div class="preset-sub">Intimate Worship</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="contemporary Christian worship"
+          data-prompt="modern worship pop, full band, catchy, upbeat, youth, energetic"
+          data-moods="energetic,uplifting">
+          <div class="preset-icon">⬆️</div>
+          <div class="preset-name">Elevation Worship</div>
+          <div class="preset-sub">Modern Worship Pop</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="gospel"
+          data-prompt="gospel choir, hammond organ, soulful, clapping, powerful, celebratory"
+          data-moods="uplifting,energetic">
+          <div class="preset-icon">🙌</div>
+          <div class="preset-name">Kirk Franklin</div>
+          <div class="preset-sub">Gospel / Soul</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="drumless-tab" class="preset-tab-content" style="display:none;">
+      <div style="background:rgba(93,202,165,0.07); border:1px solid rgba(93,202,165,0.2); border-radius:10px; padding:0.7rem 1rem; margin-bottom:0.85rem;">
+        <span style="font-family:var(--font-mono); font-size:0.75rem; color:#5dcaa5;">🥁 All drumless presets generate tracks with NO drums — perfect for playing along on your kit!</span>
+      </div>
+      <div class="preset-grid">
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="funk fusion"
+          data-prompt="funk fusion, bass guitar, electric guitar, organ, brass, no drums"
+          data-moods="energetic">
+          <div class="preset-icon">🎸</div>
+          <div class="preset-name">Funk Fusion</div>
+          <div class="preset-sub">Bass + Guitar + Organ</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="rock fusion"
+          data-prompt="rock fusion, electric guitar, powerful bass, synth, cinematic, no drums"
+          data-moods="energetic,aggressive">
+          <div class="preset-icon">🔊</div>
+          <div class="preset-name">Rock Fusion</div>
+          <div class="preset-sub">Guitar + Bass + Synth</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="jazz fusion"
+          data-prompt="jazz fusion, Rhodes piano, upright bass, trumpet, guitar, no drums"
+          data-moods="chill,dreamy">
+          <div class="preset-icon">🎷</div>
+          <div class="preset-name">Jazz Fusion</div>
+          <div class="preset-sub">Rhodes + Bass + Horns</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="gospel funk"
+          data-prompt="gospel funk, organ, bass guitar, rhythm guitar, choir pads, no drums"
+          data-moods="uplifting,energetic">
+          <div class="preset-icon">🙏</div>
+          <div class="preset-name">Gospel Funk</div>
+          <div class="preset-sub">Organ + Bass + Choir</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="80s pop rock"
+          data-prompt="80s retro, synth bass, electric guitar, synth pads, nostalgic, no drums"
+          data-moods="energetic,uplifting">
+          <div class="preset-icon">📼</div>
+          <div class="preset-name">80s Retro</div>
+          <div class="preset-sub">Synth + Guitar + Bass</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="cinematic tension"
+          data-prompt="cinematic, orchestral strings, synth drones, dark bass, suspenseful, no drums"
+          data-moods="dark,melancholic">
+          <div class="preset-icon">🎬</div>
+          <div class="preset-name">Cinematic</div>
+          <div class="preset-sub">Strings + Synth + Bass</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="neo soul"
+          data-prompt="neo soul, Rhodes piano, smooth bass, clean guitar, soulful, no drums"
+          data-moods="chill,romantic">
+          <div class="preset-icon">🌊</div>
+          <div class="preset-name">Neo Soul</div>
+          <div class="preset-sub">Rhodes + Bass + Guitar</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="latin fusion"
+          data-prompt="latin jazz, acoustic guitar, piano, bass, upbeat, no drums"
+          data-moods="energetic,uplifting">
+          <div class="preset-icon">🌶️</div>
+          <div class="preset-name">Latin Fusion</div>
+          <div class="preset-sub">Guitar + Piano + Bass</div>
+        </div>
+        <div class="preset-card" onclick="applyPreset(this)" data-genre="hip hop instrumental"
+          data-prompt="hip hop, lo-fi, warm bass, jazz piano, vinyl texture, no drums"
+          data-moods="chill,melancholic">
+          <div class="preset-icon">🎧</div>
+          <div class="preset-name">Hip Hop Beat</div>
+          <div class="preset-sub">Bass + Piano + Pads</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mood & Prompt -->
+  <div class="card">
+    <div class="section-label">Mood</div>
+    <div class="mood-row">
+      <span class="mood-tag" onclick="toggleMood(this)">chill</span>
+      <span class="mood-tag" onclick="toggleMood(this)">energetic</span>
+      <span class="mood-tag" onclick="toggleMood(this)">dark</span>
+      <span class="mood-tag" onclick="toggleMood(this)">uplifting</span>
+      <span class="mood-tag" onclick="toggleMood(this)">melancholic</span>
+      <span class="mood-tag" onclick="toggleMood(this)">aggressive</span>
+      <span class="mood-tag" onclick="toggleMood(this)">romantic</span>
+      <span class="mood-tag" onclick="toggleMood(this)">dreamy</span>
+    </div>
+
+    <div class="section-label" style="margin-top:1.25rem;">Describe your track</div>
+    <textarea id="prompt" placeholder="e.g. rainy night vibes, slow tempo, piano and synth pads, nostalgic feeling..."></textarea>
+
+    <div class="settings-row">
+      <div class="setting-group">
+        <label>Duration</label>
+        <select id="duration">
+          <option value="30">30 seconds</option>
+          <option value="60" selected>1 minute</option>
+          <option value="120">2 minutes</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label>Vocals</label>
+        <select id="vocals" onchange="toggleLyrics(this)">
+          <option value="instrumental">Instrumental (no vocals)</option>
+          <option value="male">Male Vocals</option>
+          <option value="female">Female Vocals</option>
+          <option value="choir">Choir / Group Vocals</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Lyrics box — hidden by default -->
+    <div id="lyricsBox" style="display:none; margin-top:1.25rem;">
+      <div class="section-label" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>Your Lyrics</span>
+        <button onclick="generateLyrics()" style="background:rgba(127,119,221,0.15); border:1px solid var(--accent); border-radius:6px; padding:0.25rem 0.65rem; color:#c8c4f8; font-family:var(--font-mono); font-size:0.68rem; cursor:pointer;">✨ AI Write Lyrics</button>
+      </div>
+      <textarea id="lyrics" placeholder="Type your lyrics here...&#10;&#10;[Verse 1]&#10;Your words go here...&#10;&#10;[Chorus]&#10;Your chorus here..." style="min-height:140px;"></textarea>
+      <div class="tip" style="text-align:left; margin-top:0.4rem;">💡 Use [Verse], [Chorus], [Bridge] tags for structure. Great for worship songs!</div>
+    </div>
+  </div>
+
+  <button class="generate-btn" id="genBtn" onclick="generate()">
+    Generate Track
+  </button>
+  <div class="tip">🎸 Instrumental = ElevenLabs Eleven Music &nbsp;·&nbsp; 🎤 Vocals = MiniMax Music 2.0 &nbsp;·&nbsp; ✅ Commercial license</div>
+
+  <div class="error-msg" id="errorMsg"></div>
+  <div class="status-bar" id="statusBar"></div>
+
+  <!-- Result -->
+  <div class="result-card" id="resultCard">
+    <div class="track-header">
+      <div class="track-art" id="trackArt">🎵</div>
+      <div class="track-info">
+        <div class="track-title" id="trackTitle">Your Track</div>
+        <div class="track-meta" id="trackMeta">—</div>
+      </div>
+    </div>
+    <audio id="audioPlayer" controls></audio>
+    <div class="track-actions">
+      <a class="action-btn" id="downloadBtn" download="track.mp3">⬇ Download</a>
+      <button class="action-btn" onclick="generateAgain()">↺ Regenerate</button>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="history" id="historySection" style="display:none;">
+    <div class="history-title">Recent Tracks</div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<script>
+  let selectedGenre = '';
+  let selectedMoods = [];
+  let history = JSON.parse(localStorage.getItem('bf_history') || '[]');
+  let showingKey = false;
+
+  function switchTab(btn, tabId) {
+    document.querySelectorAll('.preset-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.preset-tab-content').forEach(t => t.style.display = 'none');
+    btn.classList.add('active');
+    document.getElementById(tabId).style.display = 'block';
+  }
+
+  function applyPreset(el) {
+    document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+
+    const genre = el.dataset.genre;
+    const prompt = el.dataset.prompt;
+    const moods = el.dataset.moods.split(',');
+
+    // Set genre — find matching genre button or just store it
+    selectedGenre = genre;
+    document.querySelectorAll('.genre-btn').forEach(b => {
+      b.classList.remove('active');
+      if (b.dataset.genre === genre) b.classList.add('active');
+    });
+
+    // Set prompt
+    document.getElementById('prompt').value = prompt;
+
+    // Auto-set instrumental for drumless presets
+    if (prompt.includes('no drums') || prompt.includes('drumless')) {
+      document.getElementById('vocals').value = 'no vocals, instrumental';
+    }
+
+    // Set moods
+    selectedMoods = [];
+    document.querySelectorAll('.mood-tag').forEach(t => {
+      t.classList.remove('active');
+      if (moods.includes(t.textContent)) {
+        t.classList.add('active');
+        selectedMoods.push(t.textContent);
+      }
+    });
+  }
+
+  function toggleKey() {
+    const el = document.getElementById('apiKey');
+    const btn = event.target;
+    showingKey = !showingKey;
+    el.type = showingKey ? 'text' : 'password';
+    btn.textContent = showingKey ? 'Hide' : 'Show';
+  }
+
+  function selectGenre(el) {
+    document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    selectedGenre = el.dataset.genre;
+  }
+
+  function toggleMood(el) {
+    el.classList.toggle('active');
+    const mood = el.textContent;
+    if (el.classList.contains('active')) {
+      selectedMoods.push(mood);
+    } else {
+      selectedMoods = selectedMoods.filter(m => m !== mood);
+    }
+  }
+
+  function setStatus(msg) {
+    const bar = document.getElementById('statusBar');
+    bar.textContent = msg;
+    bar.classList.add('visible');
+  }
+
+  function clearStatus() {
+    document.getElementById('statusBar').classList.remove('visible');
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function clearError() {
+    document.getElementById('errorMsg').classList.remove('visible');
+  }
+
+  function buildPrompt() {
+    const parts = [];
+    if (selectedGenre) parts.push(selectedGenre);
+    if (selectedMoods.length) parts.push(selectedMoods.join(', '));
+    const extra = document.getElementById('prompt').value.trim();
+    if (extra) parts.push(extra);
+    return parts.join(', ');
+  }
+
+  const genreIcons = {
+    'hip hop': '🎤', 'jazz': '🎷', 'edm electronic dance music': '🎛️',
+    'rock': '🎸', 'pop': '✨', 'lo-fi chill beats': '🌙'
+  };
+  const genreNames = {
+    'hip hop': 'Hip Hop', 'jazz': 'Jazz', 'edm electronic dance music': 'EDM',
+    'rock': 'Rock', 'pop': 'Pop', 'lo-fi chill beats': 'Lo-fi'
+  };
+
+  function toggleLyrics(sel) {
+    const box = document.getElementById('lyricsBox');
+    box.style.display = sel.value === 'instrumental' ? 'none' : 'block';
+  }
+
+  async function generateLyrics() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    if (!apiKey) { showError('Please enter your API key first.'); return; }
+    const genre = selectedGenre || 'contemporary worship';
+    const moods = selectedMoods.join(', ') || 'uplifting';
+    const extra = document.getElementById('prompt').value.trim();
+    const vocals = document.getElementById('vocals').value;
+
+    const lyricsArea = document.getElementById('lyrics');
+    lyricsArea.value = 'Writing lyrics... ✨';
+
+    try {
+      const res = await fetch('https://api.aimlapi.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'o4-mini',
+          max_tokens: 600,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a professional songwriter. Write only song lyrics, no explanations, no commentary, no markdown formatting, just the raw lyrics with section labels.'
+            },
+            {
+              role: 'user',
+              content: `Write song lyrics for a ${genre} song. Mood: ${moods}. ${extra ? 'Theme: ' + extra + '.' : ''} ${vocals === 'choir' ? 'Include choir call and response parts.' : ''} Structure: [Verse 1], [Chorus], [Verse 2], [Chorus], [Bridge], [Chorus]. Make it authentic, emotional and singable. Return ONLY the lyrics.`
+            }
+          ]
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || err.error || `Error ${res.status}`);
+      }
+
+      const data = await res.json();
+      const lyrics = data.choices?.[0]?.message?.content?.trim();
+      lyricsArea.value = lyrics || 'Could not generate lyrics. Try writing your own!';
+    } catch (e) {
+      lyricsArea.value = 'Error: ' + e.message + '\n\nTry writing your own lyrics!';
+    }
+  }
+
+  async function generate() {
+    clearError();
+    const apiKey = document.getElementById('apiKey').value.trim();
+    if (!apiKey) { showError('Please enter your aimlapi.com API key.'); return; }
+    if (!selectedGenre) { showError('Please select a genre first.'); return; }
+
+    const btn = document.getElementById('genBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Generating...';
+
+    const musicPrompt = buildPrompt();
+    const vocals = document.getElementById('vocals').value;
+    const isInstrumental = vocals === 'instrumental';
+    const lyrics = document.getElementById('lyrics').value.trim();
+
+    setStatus(isInstrumental ? 'Sending to ElevenLabs Eleven Music (pure instrumental)... ⏳' : 'Sending to MiniMax Music 2.0 (vocal track)... ⏳');
+
+    try {
+      // EXACT payload from official aimlapi docs
+      let payload;
+
+      if (isInstrumental) {
+        // elevenlabs/eleven_music — prompt only, no lyrics, pure instrumental!
+        const durationMs = parseInt(document.getElementById('duration').value) * 1000;
+        payload = {
+          model: 'elevenlabs/eleven_music',
+          prompt: musicPrompt,
+          music_length_ms: durationMs
+        };
+      } else {
+        // minimax/music-2.0 — vocal track with lyrics
+        const userLyrics = lyrics ||
+          `[Verse]\nFeeling the rhythm in my soul tonight\nMoving to the music everything feels right\n[Chorus]\nLet the music play let the sound flow free\nThis is how it feels to just be me\n[Verse]\nEvery note a story every beat a dream\nLife is so much richer than it seems`;
+        payload = {
+          model: 'minimax/music-2.0',
+          prompt: musicPrompt,
+          lyrics: userLyrics
+        };
+      }
+
+      // Step 1 — Submit generation task
+      const res = await fetch('https://api.aimlapi.com/v2/generate/audio', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || err.error || `API error ${res.status} — check your credits on aimlapi.com`);
+      }
+
+      const submitted = await res.json();
+      const generationId = submitted.id || submitted.generation_id;
+      if (!generationId) throw new Error('No generation ID returned. Check your API key and credits.');
+
+      setStatus('Track is being composed... checking every 10 seconds 🎵');
+
+      // Step 2 — Poll until complete with auto retry (max 3 attempts x 3 minutes)
+      let audioUrl = null;
+      let retryCount = 0;
+      const maxRetries = 3;
+
+      while (!audioUrl && retryCount < maxRetries) {
+        if (retryCount > 0) {
+          setStatus(`Server busy — auto retrying (attempt ${retryCount + 1} of ${maxRetries})... ⏳`);
+          await new Promise(r => setTimeout(r, 5000));
+        }
+
+        for (let attempt = 0; attempt < 18; attempt++) {
+          await new Promise(r => setTimeout(r, 10000));
+          const elapsed = (attempt + 1) * 10;
+          setStatus(`Composing... ${elapsed}s ${retryCount > 0 ? `(retry ${retryCount})` : ''} 🎶`);
+
+          const poll = await fetch(`https://api.aimlapi.com/v2/generate/audio?generation_id=${encodeURIComponent(generationId)}`, {
+            headers: { 'Authorization': `Bearer ${apiKey}` }
+          });
+
+          if (!poll.ok) continue;
+          const result = await poll.json();
+
+          const status = result.status || result.state;
+          if (status === 'complete' || status === 'completed' || status === 'succeeded') {
+            audioUrl = result.audio_file?.url || result.audio_url || result.url || result.audio?.url;
+            break;
+          }
+          if (status === 'failed' || status === 'error') {
+            throw new Error('Generation failed on the server. Try a different prompt.');
+          }
+        }
+
+        retryCount++;
+      }
+
+      if (!audioUrl) throw new Error('Server is too busy right now. Please try again in a few minutes!');
+
+      setStatus('Track ready! 🎉');
+      showResult(audioUrl, musicPrompt);
+      addToHistory(audioUrl, musicPrompt);
+
+    } catch (err) {
+      clearStatus();
+      showError('Error: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Generate Track';
+    }
+  }
+
+  function showResult(audioUrl, prompt) {
+    const card = document.getElementById('resultCard');
+    document.getElementById('audioPlayer').src = audioUrl;
+    document.getElementById('downloadBtn').href = audioUrl;
+    document.getElementById('trackTitle').textContent = genreNames[selectedGenre] + ' Track';
+    document.getElementById('trackMeta').textContent = selectedMoods.join(' · ') || 'Custom';
+    document.getElementById('trackArt').textContent = genreIcons[selectedGenre] || '🎵';
+    card.classList.add('visible');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    clearStatus();
+  }
+
+  function addToHistory(audioUrl, prompt) {
+    const item = {
+      url: audioUrl,
+      genre: selectedGenre,
+      moods: [...selectedMoods],
+      prompt: prompt,
+      time: new Date().toLocaleTimeString()
+    };
+    history.unshift(item);
+    if (history.length > 10) history = history.slice(0, 10);
+    localStorage.setItem('bf_history', JSON.stringify(history));
+    renderHistory();
+  }
+
+  function renderHistory() {
+    if (!history.length) return;
+    document.getElementById('historySection').style.display = 'block';
+    const list = document.getElementById('historyList');
+    list.innerHTML = history.map((item, i) => `
+      <div class="history-item" onclick="playFromHistory(${i})">
+        <div class="history-dot"></div>
+        <div class="history-info">
+          <div class="h-title">${genreNames[item.genre] || item.genre} Track</div>
+          <div class="h-meta">${item.moods.join(' · ') || 'instrumental'} · ${item.time}</div>
+        </div>
+        <div class="history-play">▶ play</div>
+      </div>
+    `).join('');
+  }
+
+  function playFromHistory(i) {
+    const item = history[i];
+    const player = document.getElementById('audioPlayer');
+    player.src = item.url;
+    document.getElementById('trackTitle').textContent = (genreNames[item.genre] || item.genre) + ' Track';
+    document.getElementById('trackMeta').textContent = item.moods.join(' · ') || 'instrumental';
+    document.getElementById('trackArt').textContent = genreIcons[item.genre] || '🎵';
+    document.getElementById('downloadBtn').href = item.url;
+    document.getElementById('resultCard').classList.add('visible');
+    player.play();
+  }
+
+  function generateAgain() {
+    generate();
+  }
+
+  renderHistory();
+</script>
+</body>
+</html>
